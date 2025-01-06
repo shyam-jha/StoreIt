@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { createAccount, signInUser } from "@/lib/actions/user.actions";
 import OTPModal from "./OTPModal";
+import { DialogDemo } from "./Terms&Condition";
 
 
 type FormType = "sign-in" | "sign-up";
@@ -30,6 +31,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [accountId, setAccountId] = useState(null);
+    const [isTermsChecked, setIsTermsChecked] = useState(true);
 
     const formSchema = authFormSchema(type)
     const form = useForm<z.infer<typeof formSchema>>({
@@ -41,7 +43,6 @@ const AuthForm = ({ type }: { type: FormType }) => {
     })
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        console.log("Form submitted with values:", values);
         setIsLoading(true);
         setErrorMessage("");
         try {
@@ -67,6 +68,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
             setIsLoading(false);
         }
     };
+
 
     return (
         <>
@@ -121,12 +123,27 @@ const AuthForm = ({ type }: { type: FormType }) => {
                         )}
                     />
 
+                    {type === "sign-up" &&
+                        <div className="mt-4 ml-2 flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                checked={isTermsChecked}
+                                onChange={(e) => setIsTermsChecked(e.target.checked)}
+                                className="w-4 h-4"
+                            />
+                            <label htmlFor="terms" className="text-sm text-gray-600">
+                                I agree to the Terms and Conditions.
+                            </label>
+                        </div>
+                    }
+
 
 
                     <Button
                         type="submit"
                         className="form-submit-button"
-                        disabled={isLoading}
+                        disabled={isLoading || !isTermsChecked}
                     >
                         {type === "sign-in" ? "Sign In" : "Sign Up"}
 
@@ -140,6 +157,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
                             />
                         )}
                     </Button>
+
 
                     {errorMessage && <p className="error-message">*{errorMessage}</p>}
 
@@ -157,13 +175,15 @@ const AuthForm = ({ type }: { type: FormType }) => {
                             {type === "sign-in" ? "Sign Up" : "Sign In"}
                         </Link>
                     </div>
+
+                    <DialogDemo />
+
                 </form>
             </Form>
 
             {accountId && (
                 <OTPModal email={form.getValues("email")} accountId={accountId} />
             )}
-
 
 
         </>

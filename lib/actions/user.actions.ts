@@ -6,6 +6,7 @@ import { ID, Query } from "node-appwrite";
 import { parseStringify } from "../utils";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { error } from "console";
 
 export const getCurrentUser = async () => {
   try {
@@ -41,7 +42,7 @@ const getUserEmail = async (email: string) => {
 };
 
 const handleError = (error: unknown, message: string) => {
-  console.log(error, message);
+  console.log(error);
   throw error;
 };
 
@@ -81,9 +82,11 @@ export const createAccount = async ({
         accountId,
       },
     );
-  }
 
-  return parseStringify({ accountId });
+    return parseStringify({ accountId });
+  } else {
+    return { error: "User already exists. Please sign in." };
+  }
 };
 
 export const verifySecret = async ({

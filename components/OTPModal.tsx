@@ -15,11 +15,12 @@ import {
     InputOTPGroup,
     InputOTPSlot,
 } from "@/components/ui/input-otp";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { verifySecret, sendEmailOTP } from "@/lib/actions/user.actions";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast"; // Correct import for toast
 
 const OtpModal = ({
     accountId,
@@ -32,28 +33,60 @@ const OtpModal = ({
     const [isOpen, setIsOpen] = useState(true);
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [timer, setTimer] = useState(30); // Initial timer value
+    const [canResend, setCanResend] = useState(false);
+    const { toast } = useToast();
+
+    // Timer countdown logic
+    useEffect(() => {
+        if (timer > 0) {
+            const interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+            return () => clearInterval(interval);
+        } else {
+            setCanResend(true);
+        }
+    }, [timer]);
 
     const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         setIsLoading(true);
 
-        console.log({ accountId, password });
-
         try {
             const sessionId = await verifySecret({ accountId, password });
-
-            console.log({ sessionId });
-
-            if (sessionId) router.push("/");
+            if (sessionId) {
+                router.push("/");
+            } else {
+                // Show toast notification for wrong OTP
+                toast({
+                    title: "One Time Password Verification",
+                    description: "The OTP you have entered seems to be incorrect, Please Re-enter the code",
+                });
+            }
         } catch (error) {
-            console.log("Failed to verify OTP", error);
+            // Show toast notification for wrong OTP in case of error
+            toast({
+                title: "One Time Password Verification",
+                description: "The OTP you have entered seems to be incorrect, Please Re-enter the code",
+            });
+        } finally {
+            // Ensure loading state is reset
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
     };
 
     const handleResendOtp = async () => {
+        if (!canResend) return;
+
         await sendEmailOTP({ email });
+        toast({
+            title: "One Time Password Verification",
+            description: "OTP has been sent successfully, Please check your mail",
+        });
+
+        setTimer(30); // Reset timer
+        setCanResend(false); // Disable resend button
     };
 
     return (
@@ -112,10 +145,11 @@ const OtpModal = ({
                             <Button
                                 type="button"
                                 variant="link"
-                                className="pl-1 text-brand"
+                                className={`pl-1 ${canResend ? "text-brand" : "text-gray-400"}`}
                                 onClick={handleResendOtp}
+                                disabled={!canResend}
                             >
-                                Click to resend
+                                {canResend ? "Click to resend" : `Wait ${timer}s`}
                             </Button>
                         </div>
                     </div>
