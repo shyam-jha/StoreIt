@@ -60,14 +60,14 @@ const OtpModal = ({
             } else {
                 // Show toast notification for wrong OTP
                 toast({
-                    title: "One Time Password Verification",
+                    title: "OTP Verification Failed",
                     description: "The OTP you have entered seems to be incorrect, Please Re-enter the code",
                 });
             }
         } catch (error) {
             // Show toast notification for wrong OTP in case of error
             toast({
-                title: "One Time Password Verification",
+                title: "OTP Verification Failed",
                 description: "The OTP you have entered seems to be incorrect, Please Re-enter the code",
             });
         } finally {
@@ -81,8 +81,8 @@ const OtpModal = ({
 
         await sendEmailOTP({ email });
         toast({
-            title: "One Time Password Verification",
-            description: "OTP has been sent successfully, Please check your mail",
+            title: "One Time Password",
+            description: "OTP has been resend successfully, Please check your mail",
         });
 
         setTimer(30); // Reset timer

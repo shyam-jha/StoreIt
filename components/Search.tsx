@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -10,6 +9,7 @@ import Thumbnail from "@/components/Thumbnail";
 import { useDebounce } from "use-debounce";
 import { getFiles } from "@/lib/actions/files.action";
 import FormattedDateTime from "./FormattedDateAndTime";
+
 const Search = () => {
     const [query, setQuery] = useState("");
     const searchParams = useSearchParams();
@@ -19,6 +19,7 @@ const Search = () => {
     const router = useRouter();
     const path = usePathname();
     const [debouncedQuery] = useDebounce(query, 300);
+    const searchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -42,24 +43,32 @@ const Search = () => {
         }
     }, [searchQuery]);
 
+    // Close search modal when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     const handleClickItem = (file: Models.Document) => {
         setOpen(false);
         setResults([]);
-
         router.push(
-            `/${file.type === "video" || file.type === "audio" ? "media" : file.type + "s"}?query=${query}`,
+            `/${file.type === "video" || file.type === "audio" ? "media" : file.type + "s"}?query=${query}`
         );
     };
 
     return (
-        <div className="search">
+        <div className="search" ref={searchRef}>
             <div className="search-input-wrapper">
-                <Image
-                    src="/assets/icons/search.svg"
-                    alt="Search"
-                    width={24}
-                    height={24}
-                />
+                <Image src="/assets/icons/search.svg" alt="Search" width={24} height={24} />
                 <Input
                     value={query}
                     placeholder="Search..."
@@ -87,7 +96,6 @@ const Search = () => {
                                             {file.name}
                                         </p>
                                     </div>
-
                                     <FormattedDateTime
                                         date={file.$createdAt}
                                         className="caption line-clamp-1 text-light-200"
